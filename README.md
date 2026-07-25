@@ -163,6 +163,48 @@ All hooks fail gracefully if optional tools are missing — nothing breaks, you 
    - `/setup-engine godot 4.6` — configure your engine if you already know
    - `/project-stage-detect` — analyze an existing project
 
+### Alternative: install as a plugin
+
+Cloning gives you the full template — agents, skills, hooks, rules, and the
+directory structure — for **one** project. If you instead want the agents and
+skills available in **every** Claude Code session, across all your projects,
+install this repository as a plugin:
+
+```
+/plugin marketplace add LTerrorHub/Claude-Code-Game-Studios
+/plugin install game-studios@ccgs
+/reload-plugins
+```
+
+Plugin skills are namespaced, so `/brainstorm` becomes `/game-studios:brainstorm`.
+All 49 agents are available under their normal names.
+
+| | Clone the template | Install the plugin |
+|---|---|---|
+| Agents | 49 | 49 |
+| Skills | 73, as `/brainstorm` | 73, as `/game-studios:brainstorm` |
+| Hooks, rules, `CLAUDE.md`, directory structure | Included | Not included |
+| Scope | One project | Every project |
+| Always-on context cost | — | ~10.5k tokens per session |
+
+Hooks and path-scoped rules are deliberately left out of the plugin: they assume
+this repository's directory layout and would fire in unrelated projects. Use the
+clone for actual game projects, and the plugin when you want the studio's agents
+and skills on hand everywhere.
+
+> **Windows users**: the plugin's `agents/` entry is a symlink to
+> `.claude/agents/`. Git for Windows does not create symlinks unless
+> `core.symlinks` is enabled, and without it the plugin installs with **0 agents**
+> and no error. Enable it once before installing:
+>
+> ```bash
+> git config --global core.symlinks true
+> ```
+>
+> This requires Developer Mode or an elevated shell. Cloning the template is
+> unaffected — this applies only to the plugin. Verify an install with
+> `claude plugin details game-studios`, which should report 49 agents.
+
 ## Upgrading
 
 Already using an older version of this template? See [UPGRADING.md](UPGRADING.md)
@@ -173,6 +215,10 @@ versions, and which files are safe to overwrite vs. which need a manual merge.
 
 ```
 CLAUDE.md                           # Master configuration
+.claude-plugin/
+  plugin.json                       # Plugin manifest (points skills at .claude/skills/)
+  marketplace.json                  # Marketplace catalog, so the repo distributes itself
+agents/                             # Symlink -> .claude/agents/ (plugin discovery only)
 .claude/
   settings.json                     # Hooks, permissions, safety rules
   agents/                           # 49 agent definitions (markdown + YAML frontmatter)
