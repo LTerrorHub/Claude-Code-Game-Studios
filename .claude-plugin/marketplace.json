@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
+  "name": "ccgs",
+  "owner": {
+    "name": "Claude Code Game Studios",
+    "url": "https://github.com/LTerrorHub/Claude-Code-Game-Studios"
+  },
+  "description": "Game development for Claude Code \u2014 a full studio of specialized agents and phase-gated workflow skills, from first idea to shipped build.",
+  "plugins": [
+    {
+      "name": "game-studios",
+      "source": "./",
+      "description": "49 game-development agents and 73 workflow skills, from /brainstorm to /launch-checklist.",
+      "version": "1.0.0",
+      "license": "MIT",
+      "keywords": [
+        "game-development",
+        "game-design",
+        "godot",
+        "unity",
+        "unreal"
+      ]
+    }
+  ]
+}

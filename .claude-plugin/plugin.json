@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+  "name": "game-studios",
+  "displayName": "Claude Code Game Studios",
+  "version": "1.0.0",
+  "description": "Turn any Claude Code session into a game studio: 49 specialized agents across design, programming, art, audio, narrative, QA and production, plus 73 workflow skills covering a 7-phase pipeline from brainstorm to release.",
+  "author": {
+    "name": "Claude Code Game Studios contributors",
+    "url": "https://github.com/LTerrorHub/Claude-Code-Game-Studios"
+  },
+  "homepage": "https://github.com/LTerrorHub/Claude-Code-Game-Studios",
+  "repository": "https://github.com/LTerrorHub/Claude-Code-Game-Studios",
+  "license": "MIT",
+  "keywords": [
+    "game-development",
+    "game-design",
+    "godot",
+    "unity",
+    "unreal",
+    "agents",
+    "workflow"
+  ],
+  "skills": [
+    "./.claude/skills/"
+  ]
+}
