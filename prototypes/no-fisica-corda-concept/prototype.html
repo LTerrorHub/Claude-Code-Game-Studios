@@ -1,0 +1,575 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nó Vivo — Protótipo</title>
+<style>
+  :root{
+    --bg:#FFF3E4;
+    --panel:#FFFFFF;
+    --ink:#4A3B32;
+    --muted:#8A7867;
+    --accent:#E4572E;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    display:flex;
+    justify-content:center;
+    padding:20px 12px 40px;
+  }
+  #app{
+    width:100%;
+    max-width:920px;
+  }
+  h1{
+    font-size:1.4rem;
+    margin:0 0 4px;
+    text-align:center;
+  }
+  .instructions{
+    text-align:center;
+    color:var(--muted);
+    font-size:0.92rem;
+    margin:0 0 14px;
+  }
+  .toolbar{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    justify-content:center;
+    align-items:center;
+    margin-bottom:14px;
+  }
+  button{
+    font:inherit;
+    border:none;
+    border-radius:999px;
+    padding:9px 18px;
+    cursor:pointer;
+    background:var(--panel);
+    color:var(--ink);
+    box-shadow:0 2px 6px rgba(0,0,0,0.12);
+    transition:transform .1s ease, opacity .15s ease;
+  }
+  button:active{ transform:scale(0.96); }
+  button:disabled{ opacity:0.4; cursor:not-allowed; }
+  .knot-btn.active{ background:var(--accent); color:#fff; }
+  #undoBtn.urgent{ background:var(--accent); color:#fff; }
+  .stage{
+    position:relative;
+    display:flex;
+    justify-content:center;
+  }
+  canvas{
+    width:100%;
+    height:auto;
+    max-width:900px;
+    touch-action:none;
+    display:block;
+    border-radius:24px;
+    box-shadow:0 8px 24px rgba(74,59,50,0.18);
+    background:#FFF3E4;
+  }
+  .hint{
+    position:absolute;
+    top:12px;
+    left:50%;
+    transform:translateX(-50%);
+    background:var(--accent);
+    color:#fff;
+    padding:8px 16px;
+    border-radius:999px;
+    font-size:0.9rem;
+    box-shadow:0 4px 10px rgba(0,0,0,0.2);
+  }
+  .hidden{ display:none !important; }
+  .overlay{
+    position:absolute;
+    inset:0;
+    background:rgba(74,59,50,0.45);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:24px;
+  }
+  .card{
+    background:var(--panel);
+    padding:28px 32px;
+    border-radius:20px;
+    text-align:center;
+    box-shadow:0 10px 30px rgba(0,0,0,0.25);
+  }
+  .card h2{ margin:0 0 8px; }
+  .overlay-buttons{
+    display:flex;
+    gap:10px;
+    justify-content:center;
+    margin-top:14px;
+  }
+  .statsbar{
+    display:flex;
+    justify-content:center;
+    gap:18px;
+    margin-top:14px;
+    font-size:0.85rem;
+    color:var(--muted);
+  }
+  .watermark{
+    text-align:center;
+    font-size:0.72rem;
+    color:var(--muted);
+    opacity:0.7;
+    margin-top:18px;
+  }
+</style>
+</head>
+<body>
+<!-- PROTOTYPE - NOT FOR PRODUCTION -->
+<!-- Question: A física de puxar fios com risco real de travamento é divertida e legível? -->
+<!-- Date: 2026-09-01 -->
+<div id="app">
+  <h1>Nó Vivo — Protótipo</h1>
+  <p class="instructions">Arraste as pontas dos fios para fora do centro para desemaranhá-los. A ordem importa — puxar fora de ordem trava o nó!</p>
+
+  <div class="toolbar">
+    <div class="knot-buttons">
+      <button class="knot-btn" data-knot="0">Nó Fácil</button>
+      <button class="knot-btn" data-knot="1">Nó Desafio</button>
+    </div>
+    <button id="undoBtn" disabled>Desfazer</button>
+    <button id="resetBtn">Reiniciar</button>
+  </div>
+
+  <div class="stage">
+    <canvas id="c" width="900" height="600"></canvas>
+    <div id="lockHint" class="hint hidden">🔒 Nó travado! Toque em <strong>Desfazer</strong>.</div>
+    <div id="winOverlay" class="overlay hidden">
+      <div class="card">
+        <h2>Nó resolvido! 🎉</h2>
+        <p id="winStats"></p>
+        <div class="overlay-buttons">
+          <button id="playAgainBtn">Jogar de novo</button>
+          <button id="nextKnotBtn">Próximo nó</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="statsbar">
+    <span id="successCount">Puxadas certas: 0</span>
+    <span id="lockCount">Travamentos: 0</span>
+    <span id="timer">Tempo: 0s</span>
+  </div>
+
+  <p class="watermark">PROTÓTIPO — não representa a arte ou o produto final. Serve só para testar a mecânica.</p>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  const canvas = document.getElementById('c');
+  const ctx = canvas.getContext('2d');
+  const BG_COLOR = '#FFF3E4';
+  const CENTER = {x:450, y:300};
+  const MAXPULL = 150;
+
+  function pt(angleDeg, radius){
+    const r = angleDeg * Math.PI/180;
+    return {x: CENTER.x + radius*Math.cos(r), y: CENTER.y - radius*Math.sin(r)};
+  }
+
+  function quadPoint(p0,p1,p2,t){
+    const mt = 1-t;
+    return {
+      x: mt*mt*p0.x + 2*mt*t*p1.x + t*t*p2.x,
+      y: mt*mt*p0.y + 2*mt*t*p1.y + t*t*p2.y
+    };
+  }
+  function quadTangentAngle(p0,p1,p2,t){
+    const mt = 1-t;
+    const x = 2*mt*(p1.x-p0.x) + 2*t*(p2.x-p1.x);
+    const y = 2*mt*(p1.y-p0.y) + 2*t*(p2.y-p1.y);
+    return Math.atan2(y,x);
+  }
+
+  const KNOT_DEFS = [
+    {
+      name:'Nó Fácil',
+      handleR:220, anchorR:32, curveAmt:40,
+      strandDefs:[
+        {id:'red',   color:'#E4572E', angle:90,  curveSign:1},
+        {id:'blue',  color:'#4C6EF5', angle:210, curveSign:-1},
+        {id:'green', color:'#40A578', angle:330, curveSign:1},
+      ],
+      crossings:[
+        {on:'blue',  over:'red',  t:0.5},
+        {on:'green', over:'blue', t:0.5},
+      ]
+    },
+    {
+      name:'Nó Desafio',
+      handleR:230, anchorR:34, curveAmt:40,
+      strandDefs:[
+        {id:'orange', color:'#F2994A', angle:45,  curveSign:1},
+        {id:'purple', color:'#9B5DE5', angle:135, curveSign:-1},
+        {id:'teal',   color:'#2EC4B6', angle:225, curveSign:1},
+        {id:'pink',   color:'#F15BB5', angle:315, curveSign:-1},
+      ],
+      crossings:[
+        {on:'teal', over:'orange', t:0.35},
+        {on:'teal', over:'purple', t:0.65},
+        {on:'pink', over:'teal',   t:0.5},
+      ]
+    }
+  ];
+
+  let knotIndex = 0;
+  let strands = [];
+  let strandsById = {};
+  let crossings = [];
+  let state = 'idle'; // idle | dragging | resolving | releasing | locked | won
+  let activeId = null;
+  let lockedId = null;
+  let particles = [];
+  let stats = {successes:0, locks:0, startTime:0, endTime:0};
+
+  function loadKnot(i){
+    knotIndex = i;
+    const def = KNOT_DEFS[i];
+    strands = def.strandDefs.map(sd=>{
+      const handle = pt(sd.angle, def.handleR);
+      const anchor = pt(sd.angle, def.anchorR);
+      const mid = {x:(handle.x+anchor.x)/2, y:(handle.y+anchor.y)/2};
+      const dx = handle.x-anchor.x, dy = handle.y-anchor.y;
+      const len = Math.hypot(dx,dy) || 1;
+      const perp = {x:-dy/len, y:dx/len};
+      const control = {x:mid.x+perp.x*def.curveAmt*sd.curveSign, y:mid.y+perp.y*def.curveAmt*sd.curveSign};
+      return {
+        id:sd.id, color:sd.color, handle, anchor, control,
+        exitDir:{x:dx/len, y:dy/len},
+        active:true, visualProgress:0, targetProgress:0, jitterUntil:0
+      };
+    });
+    strandsById = Object.fromEntries(strands.map(s=>[s.id,s]));
+    crossings = def.crossings;
+    state = 'idle'; activeId = null; lockedId = null; particles = [];
+    stats = {successes:0, locks:0, startTime:performance.now(), endTime:0};
+    updateUI();
+  }
+
+  function isPullable(id){
+    const blockers = crossings.filter(c=>c.on===id).map(c=>c.over);
+    return blockers.every(b=>!strandsById[b].active);
+  }
+
+  function currentHandlePos(s){
+    let x = s.handle.x + s.exitDir.x*s.visualProgress*MAXPULL;
+    let y = s.handle.y + s.exitDir.y*s.visualProgress*MAXPULL;
+    if(s.id===lockedId && performance.now() < s.jitterUntil){
+      const remain = (s.jitterUntil - performance.now())/600;
+      const amp = 4*remain;
+      x += (Math.random()-0.5)*2*amp;
+      y += (Math.random()-0.5)*2*amp;
+    }
+    return {x,y};
+  }
+
+  function findHandleAt(x,y){
+    if(state!=='idle') return null;
+    let best=null, bestD=Infinity;
+    for(const s of strands){
+      if(!s.active) continue;
+      const p = currentHandlePos(s);
+      const d = Math.hypot(p.x-x, p.y-y);
+      if(d<40 && d<bestD){ best=s; bestD=d; }
+    }
+    return best;
+  }
+
+  // ---- Audio ----
+  let audioCtx = null;
+  function ensureAudio(){
+    if(!audioCtx){
+      try{ audioCtx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ audioCtx=null; }
+    } else if(audioCtx.state==='suspended'){
+      audioCtx.resume();
+    }
+  }
+  function beep(freq,startTime,duration,type,vol){
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = type; osc.frequency.value = freq;
+    gain.gain.setValueAtTime(vol, startTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, startTime+duration);
+    osc.connect(gain).connect(audioCtx.destination);
+    osc.start(startTime); osc.stop(startTime+duration+0.02);
+  }
+  function playTone(kind){
+    if(!audioCtx) return;
+    try{
+      const t0 = audioCtx.currentTime;
+      if(kind==='success'){ beep(660,t0,0.09,'sine',0.15); beep(880,t0+0.09,0.12,'sine',0.15); }
+      else if(kind==='lock'){ beep(140,t0,0.18,'square',0.12); }
+    }catch(e){ /* ignore audio errors */ }
+  }
+
+  // ---- Particles ----
+  function spawnParticles(pos,color){
+    for(let i=0;i<14;i++){
+      const ang = Math.random()*Math.PI*2;
+      const spd = 60+Math.random()*90;
+      particles.push({
+        x:pos.x, y:pos.y,
+        vx:Math.cos(ang)*spd, vy:Math.sin(ang)*spd,
+        life:1, color
+      });
+    }
+  }
+  function updateParticles(dt){
+    for(const p of particles){
+      p.x += p.vx*dt; p.y += p.vy*dt;
+      p.vx *= 0.92; p.vy *= 0.92;
+      p.life -= dt*1.6;
+    }
+    particles = particles.filter(p=>p.life>0);
+  }
+  function drawParticles(){
+    for(const p of particles){
+      ctx.globalAlpha = Math.max(0,p.life);
+      ctx.fillStyle = p.color;
+      ctx.beginPath();
+      ctx.arc(p.x,p.y,4,0,Math.PI*2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  // ---- Interaction triggers ----
+  function triggerSuccess(s){
+    s.targetProgress = 1.6;
+    state = 'resolving'; activeId = s.id;
+    stats.successes++;
+    spawnParticles(currentHandlePos(s), s.color);
+    playTone('success');
+    updateUI();
+  }
+  function triggerLock(s){
+    s.targetProgress = 0.85;
+    state = 'locked'; lockedId = s.id;
+    s.jitterUntil = performance.now()+600;
+    stats.locks++;
+    playTone('lock');
+    updateUI();
+  }
+  function releaseEarly(s){
+    s.targetProgress = 0;
+    state = 'releasing'; activeId = s.id;
+  }
+  function undo(){
+    if(state!=='locked') return;
+    const s = strandsById[lockedId];
+    s.targetProgress = 0;
+    state = 'releasing'; activeId = lockedId;
+    lockedId = null;
+    updateUI();
+  }
+  function checkWin(){
+    if(strands.every(s=>!s.active)){
+      state = 'won';
+      stats.endTime = performance.now();
+      updateUI();
+    }
+  }
+
+  // ---- Pointer handling ----
+  function toCanvasCoords(e){
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width/rect.width, scaleY = canvas.height/rect.height;
+    return {x:(e.clientX-rect.left)*scaleX, y:(e.clientY-rect.top)*scaleY};
+  }
+  canvas.addEventListener('pointerdown', e=>{
+    ensureAudio();
+    if(state!=='idle') return;
+    const {x,y} = toCanvasCoords(e);
+    const s = findHandleAt(x,y);
+    if(s){
+      state='dragging'; activeId=s.id;
+      try{ canvas.setPointerCapture(e.pointerId); }catch(err){}
+    }
+  });
+  canvas.addEventListener('pointermove', e=>{
+    if(state!=='dragging') return;
+    const {x,y} = toCanvasCoords(e);
+    const s = strandsById[activeId];
+    const dx = x-s.handle.x, dy = y-s.handle.y;
+    const proj = dx*s.exitDir.x + dy*s.exitDir.y;
+    s.visualProgress = Math.max(0, Math.min(1, proj/MAXPULL));
+  });
+  function endDrag(){
+    if(state!=='dragging') return;
+    const s = strandsById[activeId];
+    if(s.visualProgress>=0.92){
+      if(isPullable(s.id)) triggerSuccess(s); else triggerLock(s);
+    } else {
+      releaseEarly(s);
+    }
+  }
+  canvas.addEventListener('pointerup', endDrag);
+  canvas.addEventListener('pointercancel', endDrag);
+
+  // ---- UI wiring ----
+  document.querySelectorAll('.knot-btn').forEach((btn,i)=>{
+    btn.addEventListener('click', ()=>loadKnot(i));
+  });
+  document.getElementById('undoBtn').addEventListener('click', undo);
+  document.getElementById('resetBtn').addEventListener('click', ()=>loadKnot(knotIndex));
+  document.getElementById('playAgainBtn').addEventListener('click', ()=>loadKnot(knotIndex));
+  document.getElementById('nextKnotBtn').addEventListener('click', ()=>loadKnot((knotIndex+1)%KNOT_DEFS.length));
+
+  function updateUI(){
+    document.getElementById('successCount').textContent = `Puxadas certas: ${stats.successes}`;
+    document.getElementById('lockCount').textContent = `Travamentos: ${stats.locks}`;
+    const undoBtn = document.getElementById('undoBtn');
+    undoBtn.disabled = state!=='locked';
+    undoBtn.classList.toggle('urgent', state==='locked');
+    document.getElementById('lockHint').classList.toggle('hidden', state!=='locked');
+    document.querySelectorAll('.knot-btn').forEach((b,i)=>b.classList.toggle('active', i===knotIndex));
+    const win = document.getElementById('winOverlay');
+    win.classList.toggle('hidden', state!=='won');
+    if(state==='won'){
+      const secs = Math.round((stats.endTime-stats.startTime)/1000);
+      document.getElementById('winStats').textContent = `${stats.successes} puxadas certas, ${stats.locks} travamentos, ${secs}s.`;
+    }
+  }
+  function updateTimer(){
+    const now = state==='won' ? stats.endTime : performance.now();
+    document.getElementById('timer').textContent = `Tempo: ${Math.round((now-stats.startTime)/1000)}s`;
+  }
+
+  // ---- Render loop ----
+  let lastTs = performance.now();
+  function update(ts){
+    const dt = Math.min(0.05, (ts-lastTs)/1000);
+    lastTs = ts;
+
+    for(const s of strands){
+      if((state==='resolving' || state==='releasing') && s.id===activeId){
+        s.visualProgress += (s.targetProgress - s.visualProgress)*0.22;
+        if(state==='resolving' && s.visualProgress>=1.55){
+          s.active = false; s.visualProgress = 1.6;
+          state='idle'; activeId=null;
+          checkWin();
+        } else if(state==='releasing' && Math.abs(s.targetProgress-s.visualProgress)<0.01){
+          s.visualProgress = 0;
+          state='idle'; activeId=null;
+          updateUI();
+        }
+      } else if(state==='locked' && s.id===lockedId){
+        s.visualProgress += (s.targetProgress - s.visualProgress)*0.22;
+      }
+    }
+    updateParticles(dt);
+    updateTimer();
+  }
+
+  function draw(ts){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.fillStyle = BG_COLOR;
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+
+    // yarn ball decoration
+    ctx.beginPath();
+    ctx.fillStyle = '#F4E1C6';
+    ctx.arc(CENTER.x, CENTER.y, 26, 0, Math.PI*2);
+    ctx.fill();
+
+    // strand curves
+    for(const s of strands){
+      if(!s.active && state!=='resolving') continue;
+      const p0 = currentHandlePos(s);
+      ctx.save();
+      ctx.shadowColor = 'rgba(0,0,0,0.15)';
+      ctx.shadowBlur = 6;
+      ctx.shadowOffsetY = 3;
+      ctx.beginPath();
+      ctx.moveTo(p0.x, p0.y);
+      ctx.quadraticCurveTo(s.control.x, s.control.y, s.anchor.x, s.anchor.y);
+      ctx.strokeStyle = s.color;
+      ctx.lineWidth = 16;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // crossing occlusion patches (draw over/under illusion)
+    ctx.save();
+    ctx.shadowBlur = 0;
+    for(const c of crossings){
+      const onS = strandsById[c.on], overS = strandsById[c.over];
+      if(onS.active && overS.active){
+        const onP0 = currentHandlePos(onS);
+        const point = quadPoint(onP0, onS.control, onS.anchor, c.t);
+        const angle = quadTangentAngle(onP0, onS.control, onS.anchor, c.t);
+        ctx.beginPath();
+        ctx.fillStyle = BG_COLOR;
+        ctx.arc(point.x, point.y, 11, 0, Math.PI*2);
+        ctx.fill();
+        const ex = Math.cos(angle), ey = Math.sin(angle);
+        ctx.beginPath();
+        ctx.moveTo(point.x-ex*17, point.y-ey*17);
+        ctx.lineTo(point.x+ex*17, point.y+ey*17);
+        ctx.strokeStyle = overS.color;
+        ctx.lineWidth = 16;
+        ctx.lineCap = 'round';
+        ctx.stroke();
+      }
+    }
+    ctx.restore();
+
+    // handles
+    for(const s of strands){
+      if(!s.active) continue;
+      const p0 = currentHandlePos(s);
+      let alpha = 1;
+      if(state==='locked' && s.id!==lockedId) alpha = 0.35;
+      ctx.globalAlpha = alpha;
+      ctx.beginPath();
+      ctx.fillStyle = s.color;
+      ctx.arc(p0.x, p0.y, 14, 0, Math.PI*2);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,0.7)';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+      if(state==='idle' && isPullable(s.id)){
+        const pulse = 4+2*Math.sin(ts/300);
+        ctx.beginPath();
+        ctx.arc(p0.x, p0.y, 14+pulse, 0, Math.PI*2);
+        ctx.strokeStyle = s.color+'88';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    drawParticles();
+  }
+
+  function loop(ts){
+    update(ts);
+    draw(ts);
+    requestAnimationFrame(loop);
+  }
+
+  loadKnot(0);
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
