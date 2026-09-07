@@ -3,7 +3,7 @@
 <!-- STATUS -->
 Epic: Concept Validation
 Feature: Nó Vivo — Física de Corda
-Task: Concept prototype (HTML path)
+Task: Concept prototype v2 (tensão de corda real)
 <!-- /STATUS -->
 
 ## Current Task
@@ -35,11 +35,38 @@ so browser latency doesn't compromise the test.
 - Feedback simples: cor de destaque + som ao soltar, vibração visual ao travar
 - Cortado: Vila/meta, múltiplos níveis, combo, menu, arte polida
 
+## Playtest 1 (v1) — resultado
+
+**PARCIALMENTE CONFIRMADA.** O travamento é legível ("entendi o travamento") — a
+suposição mais arriscada caiu. Mas a puxada foi julgada "pouco tátil", atingindo o
+pilar nº 1 (Tensão Tátil Real). Causa apurada no código: o v1 não simulava tensão
+nenhuma — `visualProgress = clamp(proj/MAXPULL)`, um slider linear. Os fios também
+não se cruzavam de verdade; o cruzamento era uma barra pintada por cima.
+
+Lacunas apontadas pelo jogador: sem resistência, o resto do nó não reage, o fio não
+deforma. (Feedback durante a puxada NÃO foi apontado como problema.)
+
+## Playtest 2 (v2) — pendente
+
+v2 implementado: cadeia de 26 pontos por fio com Verlet + restrições de distância,
+parede de esticamento absoluta (62px), cruzamentos derivados de interseções
+geométricas reais, nó que se aperta enquanto você força, deformação (afinamento +
+fibras se espaçando), oscilação vinda da física, trava que fixa o aperto até Desfazer.
+
+Solvabilidade agora é garantida por construção: os fios são ordenados em camadas
+(ordem total), então sempre existe um fio no topo que está livre. Isso ataca o
+"maior risco" registrado no game-concept.md.
+
+Medições headless: fio livre cede com 64px de dedo; fio preso trava em 62px de
+esticamento mesmo com 240px de arrasto, e soltar ali trava o nó.
+
 ## Progress
 
 - [x] Phase 1-4: Hypothesis, path, and scope confirmed
 - [x] Phase 5: Implemented `prototypes/no-fisica-corda-concept/prototype.html` — smoke-tested headless (Playwright), lock/undo/solve logic verified, no JS errors
-- [ ] Phase 6: Playtest debrief (awaiting user's hands-on session)
+- [x] Phase 6a: Playtest 1 debrief — PARCIALMENTE CONFIRMADA (travamento legível, tato ausente)
+- [x] Phase 5b: v2 com simulação de corda real — smoke test headless passa (3 puxadas certas, 1 travamento, 0 erros)
+- [ ] Phase 6b: Segundo playtest + debrief completo (melhor momento / pior momento / surpresa / veredito)
 - [ ] Phase 7: Generate REPORT.md
 - [ ] Phase 8: Creative director review (skipped — lean mode)
 - [ ] Phase 9: Summary and next steps
