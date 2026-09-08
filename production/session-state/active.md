@@ -3,7 +3,7 @@
 <!-- STATUS -->
 Epic: Concept Validation
 Feature: Nó Vivo — Física de Corda
-Task: Concept prototype v2 (tensão de corda real)
+Task: /design-review concluído — MAJOR REVISION NEEDED; aguardando playtest externo
 <!-- /STATUS -->
 
 ## Current Task
@@ -68,8 +68,14 @@ esticamento mesmo com 240px de arrasto, e soltar ali trava o nó.
 - [x] Phase 5b: v2 com simulação de corda real — smoke test headless passa (3 puxadas certas, 1 travamento, 0 erros)
 - [x] Phase 6b: Segundo playtest — "ficou muito melhor", veredito PROCEED
 - [x] Phase 7: REPORT.md escrito + prototypes/index.md criado
-- [ ] Phase 8: Creative director review (skipped — lean mode)
-- [ ] Phase 9: Summary and next steps
+- [x] Phase 8/9: /prototype encerrado
+- [x] /design-review (full, 6 especialistas + creative-director) — MAJOR REVISION NEEDED, escopo XL
+- [x] REPORT.md emendado: veredito → PROCEED WITH CONDITION
+- [x] design/gdd/reviews/game-concept-review-log.md criado
+- [ ] **BLOQUEANTE: playtest externo do v2** — 2-3 pessoas não avisadas, ≥1 no celular
+- [ ] 4 decisões do usuário: postura de negócio / fonte de profundidade / escopo da Vila / GDScript-only (ADR)
+- [ ] Revisar game-concept.md (14 edições listadas pelo creative-director)
+- [ ] /gate-check → /map-systems
 
 ## Files Being Worked On
 
