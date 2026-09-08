@@ -66,8 +66,8 @@ esticamento mesmo com 240px de arrasto, e soltar ali trava o nó.
 - [x] Phase 5: Implemented `prototypes/no-fisica-corda-concept/prototype.html` — smoke-tested headless (Playwright), lock/undo/solve logic verified, no JS errors
 - [x] Phase 6a: Playtest 1 debrief — PARCIALMENTE CONFIRMADA (travamento legível, tato ausente)
 - [x] Phase 5b: v2 com simulação de corda real — smoke test headless passa (3 puxadas certas, 1 travamento, 0 erros)
-- [ ] Phase 6b: Segundo playtest + debrief completo (melhor momento / pior momento / surpresa / veredito)
-- [ ] Phase 7: Generate REPORT.md
+- [x] Phase 6b: Segundo playtest — "ficou muito melhor", veredito PROCEED
+- [x] Phase 7: REPORT.md escrito + prototypes/index.md criado
 - [ ] Phase 8: Creative director review (skipped — lean mode)
 - [ ] Phase 9: Summary and next steps
 
