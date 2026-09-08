@@ -75,7 +75,8 @@ esticamento mesmo com 240px de arrasto, e soltar ali trava o nó.
 - [ ] **BLOQUEANTE: playtest externo do v2** — 2-3 pessoas não avisadas, ≥1 no celular
 - [x] 4 decisões travadas: D1 aprender-primeiro / D2 combo-é-a-aposta + enquadramento sensorial / D3 economia completa da Vila (contra recomendação) / D4 GDScript+C# (contra recomendação)
 - [x] game-concept.md revisado — 14 edições aplicadas
-- [ ] ADR da decisão de linguagem (/architecture-decision)
+- [x] ADR-0001 gravado (linguagem do MVP) — Proposed; registro de arquitetura populado com 5 entradas
+- [ ] Verificação em aparelho real para promover ADR-0001 a Accepted (6 itens em Validation Criteria)
 - [ ] /gate-check → /map-systems
 
 ## Files Being Worked On

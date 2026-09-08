@@ -71,7 +71,7 @@ sistema deve usar, perguntar ao usuário e registrar a decisão aqui.
 ## Architecture Decisions Log
 
 <!-- Quick reference linking to full ADRs in docs/architecture/ -->
-- [No ADRs yet — use /architecture-decision to create one]
+- **ADR-0001** — Linguagem de implementação do MVP: GDScript + C# (`docs/architecture/adr-0001-linguagem-mvp.md`) — *Proposed*, aguarda verificação em aparelho real
 
 ## Engine Specialists
 
