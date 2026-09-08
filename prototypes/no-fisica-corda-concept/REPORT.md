@@ -196,3 +196,78 @@ protótipo entregou o algoritmo que o neutraliza.
 
 > *Prototype code location: `prototypes/no-fisica-corda-concept/`*
 > *This code is throwaway. Never refactor into production.*
+
+---
+
+# EMENDA — 2026-09-08
+
+*Anexada após `/design-review` do documento de conceito. As seções acima ficam
+como registro histórico e não foram editadas. Esta emenda corrige o que elas
+afirmam com mais confiança do que a evidência sustenta.*
+
+## O que está errado acima
+
+A linha de métrica **"Hypothesis verdict | legibilidade CONFIRMADA por medição"**
+não se sustenta, por dois motivos independentes — o segundo é o grave.
+
+**1. O testador não era neutro.** `[qa-lead]` Ambas as sessões tiveram um único
+testador, que é quem projetou a mecânica. Um teste de "uma pessoa não avisada
+consegue ler a regra?" perde quase todo o valor quando o testador não pode ser
+ingênuo. E "ficou muito melhor", vindo de quem acabou de passar uma sessão de
+trabalho reescrevendo a física, é um resultado clássico de viés de confirmação.
+
+**2. A legibilidade foi medida num artefato que não existe mais.** `[creative-director]`
+O v1 **não tinha cruzamentos reais** — isso está registrado neste próprio
+relatório: "os fios nunca se cruzavam de verdade; eram raios saindo de um centro
+e o 'cruzamento' era uma barra colorida pintada por cima". A observação de
+legibilidade foi colhida sobre uma **barra pintada**, não sobre uma interseção
+geométrica. O v2 usa interseção real. Portanto a legibilidade do mecanismo que
+vai para produção **nunca foi observada** — nem por um testador enviesado.
+
+Isso invalida a palavra "medição" independentemente de quem testou.
+
+## Veredito corrigido
+
+**PROCEED WITH CONDITION** (era PROCEED).
+
+O PROCEED continua ganho no **risco estrutural**: a solubilidade por construção é
+verificável em código, não é uma alegação de sensação, e vale o que foi dito.
+
+O PROCEED **não está ganho na hipótese comportamental**. Legibilidade e tatilidade
+seguem não confirmadas no mecanismo que vai ser construído.
+
+## Condição para fechar
+
+Reexecutar o build v2 que já existe — **zero alteração de código** — com:
+
+- **2-3 pessoas externas, não avisadas.** Nenhuma explicação prévia.
+- **Pelo menos uma sessão em tela de toque**, não mouse. O protótipo é HTML e abre
+  no navegador do celular. Todos os números de sensação registrados acima
+  (46/62/34/64px) vieram de cursor de mouse, que não tem oclusão nenhuma; um
+  polegar cobre 40-70px em densidade mobile, a mesma ordem de grandeza do limiar
+  de 64px que o jogador precisa perceber. `[ux-designer]`
+- **Protocolo:** colocar um nó já travado na frente da pessoa, sem dizer nada.
+  Medir duas coisas: (a) ela retenta por vontade própria? (b) ela consegue
+  explicar, com as próprias palavras, por que aquela puxada falhou?
+- **Rubrica:** correto / vago / errado. Gravar a tela como evidência em
+  `production/qa/evidence/`.
+
+Custo: uma tarde. Nenhum código novo. Fecha simultaneamente a lacuna comportamental
+e a lacuna de polegar — que hoje é o único risco não mitigado sentado exatamente
+embaixo do único diferencial do jogo.
+
+## Ressalva adicional sobre a "vitória" da solubilidade
+
+A seção "Recommendation: PROCEED" acima celebra a ordenação por camadas como
+ganho puro. Ela não é. `[systems-designer]` `[creative-director]`
+
+A garantia funciona **porque** a ordem total proíbe ciclos de dependência — e
+ciclos de dependência são o único lugar onde profundidade de planejamento poderia
+existir. Não é possível colher solubilidade garantida e profundidade de puzzle da
+mesma estrutura. Consequência: o "destravável" é uma propriedade puramente local
+e visível, e a estratégia ótima é "puxe o que não tem nada em cima, repita" —
+busca visual, não planejamento.
+
+A garantia deve ser mantida (puzzle insolúvel é a causa nº 1 de desinstalação na
+categoria). Mas a profundidade tem de vir de outra camada, e essa decisão está
+aberta no documento de conceito, não aqui.
