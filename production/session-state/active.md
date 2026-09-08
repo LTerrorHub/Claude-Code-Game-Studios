@@ -3,7 +3,7 @@
 <!-- STATUS -->
 Epic: Concept Validation
 Feature: Nó Vivo — Física de Corda
-Task: /design-review concluído — MAJOR REVISION NEEDED; aguardando playtest externo
+Task: conceito revisado e decisões travadas; aguardando playtest externo
 <!-- /STATUS -->
 
 ## Current Task
@@ -73,8 +73,9 @@ esticamento mesmo com 240px de arrasto, e soltar ali trava o nó.
 - [x] REPORT.md emendado: veredito → PROCEED WITH CONDITION
 - [x] design/gdd/reviews/game-concept-review-log.md criado
 - [ ] **BLOQUEANTE: playtest externo do v2** — 2-3 pessoas não avisadas, ≥1 no celular
-- [ ] 4 decisões do usuário: postura de negócio / fonte de profundidade / escopo da Vila / GDScript-only (ADR)
-- [ ] Revisar game-concept.md (14 edições listadas pelo creative-director)
+- [x] 4 decisões travadas: D1 aprender-primeiro / D2 combo-é-a-aposta + enquadramento sensorial / D3 economia completa da Vila (contra recomendação) / D4 GDScript+C# (contra recomendação)
+- [x] game-concept.md revisado — 14 edições aplicadas
+- [ ] ADR da decisão de linguagem (/architecture-decision)
 - [ ] /gate-check → /map-systems
 
 ## Files Being Worked On
