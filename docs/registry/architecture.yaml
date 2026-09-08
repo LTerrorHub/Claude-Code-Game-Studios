@@ -30,7 +30,7 @@
 #   Superseded entries:     Grep pattern="status: superseded"
 
 version: 1
-last_updated: ""
+last_updated: "2026-09-08"
 
 # ─── STATE OWNERSHIP ─────────────────────────────────────────────────────────
 # Who is the authoritative owner of each piece of shared game state.
@@ -71,7 +71,22 @@ state_ownership: []
 #
 # pattern options: signal | direct_call | event_bus | shared_resource | rpc | none
 
-interfaces: []
+interfaces:
+  - contract: strand_state_events
+    status: active
+    pattern: signal
+    producer: strand-system          # nó Strand (C#)
+    consumers:
+      - gameplay-layer               # GDScript: reage a travar/soltar
+      - ui-layer                     # GDScript: mostra dica de Desfazer
+      - audio-layer                  # GDScript: dispara SFX
+    adr: docs/architecture/adr-0001-linguagem-mvp.md
+    signal_signature: "StrandLocked(strand_id: int) / StrandFreed(strand_id: int)"
+    notes: "Orientado a evento. GDScript NUNCA faz polling de estado de corda por quadro."
+    referenced_by:
+      - docs/architecture/adr-0001-linguagem-mvp.md
+    added: 2026-09-08
+    revised: ""
 
 # Example:
 #
@@ -131,7 +146,34 @@ performance_budgets: []
 # Register an API decision when the choice is non-obvious and other ADRs might
 # make a different choice for the same purpose without knowing this was decided.
 
-api_decisions: []
+api_decisions:
+  - purpose: rope_simulation_ownership
+    status: active
+    api: "Script C# no próprio nó Strand, dono do seu _PhysicsProcess, escrevendo direto no Line2D filho"
+    not: "Chamada marshalada GDScript→C# por fio por quadro devolvendo PackedVector2Array"
+    adr: docs/architecture/adr-0001-linguagem-mvp.md
+    reason: >
+      O motor chama _PhysicsProcess direto no objeto C# — despacho virtual, não
+      chamada marshalada. Zero travessias de fronteira no laço de 60Hz. A única
+      entrada por frame é SetDragTarget(Vector2), no único fio arrastado.
+    referenced_by:
+      - docs/architecture/adr-0001-linguagem-mvp.md
+    added: 2026-09-08
+    revised: ""
+
+  - purpose: rope_solver_testability
+    status: active
+    api: "Matemática do solver (Verlet, restrições, parede de esticamento, detecção de travamento) em classe C# pura, sem dependência de Godot"
+    not: "Matemática embutida no nó Godot"
+    adr: docs/architecture/adr-0001-linguagem-mvp.md
+    reason: >
+      GUT é GDScript-only e não exercita C#. Isolar a matemática permite testá-la
+      num runner .NET headless em CI, cumprindo o padrão de teste bloqueante para
+      sistemas de lógica de coding-standards.md. O nó Godot vira casca fina.
+    referenced_by:
+      - docs/architecture/adr-0001-linguagem-mvp.md
+    added: 2026-09-08
+    revised: ""
 
 # Example:
 #
@@ -157,7 +199,31 @@ api_decisions: []
 # Register a pattern when an ADR explicitly bans it AND other ADRs might
 # unknowingly use it (i.e., it's a tempting but wrong approach for this project).
 
-forbidden_patterns: []
+forbidden_patterns:
+  - pattern: per_point_language_boundary_crossing
+    status: active
+    description: >
+      Nunca cruzar a fronteira GDScript↔C# por ponto por quadro. Se C# for usado
+      para a simulação, TODO o laço por fio vive em C#.
+    why: >
+      Cada travessia marshala por Variant. Numa simulação de ~260 pontos a 60Hz, o
+      custo de marshaling excederia a própria matemática que C# deveria acelerar —
+      a decisão de linguagem se pagaria em prejuízo.
+    adr: docs/architecture/adr-0001-linguagem-mvp.md
+    added: 2026-09-08
+
+  - pattern: prototype_code_into_src
+    status: active
+    description: >
+      O código em prototypes/ nunca é refatorado para dentro de src/. Ele é
+      especificação de comportamento e fonte de valores de tuning, não base de código.
+    why: >
+      O protótipo foi construído com padrões deliberadamente relaxados para
+      velocidade (sem testes, sem tratamento de erro, valores hardcoded, geometria
+      em pixels de desktop). Promovê-lo carregaria essas decisões para produção
+      disfarçadas de código pronto.
+    adr: docs/architecture/adr-0001-linguagem-mvp.md
+    added: 2026-09-08
 
 # Example:
 #
